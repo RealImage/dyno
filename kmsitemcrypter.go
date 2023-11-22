@@ -47,8 +47,7 @@ func (c *kmsCryptedItem) Encrypt(
 	if err != nil {
 		return "", err
 	}
-
-	return base64.StdEncoding.EncodeToString(out.CiphertextBlob), nil
+	return base64.URLEncoding.EncodeToString(out.CiphertextBlob), nil
 }
 
 // Decrypt decrypts a dynamodb item. If ctx contains an encryption context, it will be used
@@ -57,7 +56,7 @@ func (c *kmsCryptedItem) Decrypt(
 	ctx context.Context,
 	item string,
 ) (map[string]types.AttributeValue, error) {
-	decodedItem, err := base64.StdEncoding.DecodeString(item)
+	decodedItem, err := base64.URLEncoding.DecodeString(item)
 	if err != nil {
 		return nil, err
 	}
@@ -72,11 +71,9 @@ func (c *kmsCryptedItem) Decrypt(
 	if err != nil {
 		return nil, err
 	}
-
 	it := map[string]types.AttributeValue{}
 	if err := json.Unmarshal(out.Plaintext, &it); err != nil {
 		return nil, err
 	}
-
 	return it, nil
 }
