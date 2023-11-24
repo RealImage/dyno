@@ -9,6 +9,6 @@ leaking sensitive information.
 
 ## License
 
-Dyno is available under the terms of the Mozilla Public License 2.0.
+Dyno is available under the terms of the MIT license.
 
 Qube Cinema © 2023

@@ -1,7 +1,3 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
 // Package dyno provides a simple way to encrypt and decrypt dynamodb items with a KMS key.
 // It is useful for passing sensitive information to a client. For example, the LastEvaluatedKey
 // returned by a dynamodb query can be encrypted and passed to a client. The client can then
