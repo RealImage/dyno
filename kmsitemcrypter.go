@@ -3,7 +3,6 @@ package dyno
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
@@ -28,7 +27,7 @@ func (c *kmsCryptedItem) Encrypt(
 	ctx context.Context,
 	item map[string]types.AttributeValue,
 ) (string, error) {
-	itJson, err := marshalJSON(item)
+	itJson, err := attrMapMarshalJSON(item)
 	if err != nil {
 		return "", err
 	}
@@ -36,13 +35,16 @@ func (c *kmsCryptedItem) Encrypt(
 		KeyId:     &c.kmsKeyID,
 		Plaintext: itJson,
 	}
+
 	if ec, ok := getEncryptionContext(ctx); ok {
 		in.EncryptionContext = ec
 	}
+
 	out, err := c.kmsClient.Encrypt(ctx, &in)
 	if err != nil {
 		return "", err
 	}
+
 	return base64.URLEncoding.EncodeToString(out.CiphertextBlob), nil
 }
 
@@ -56,20 +58,20 @@ func (c *kmsCryptedItem) Decrypt(
 	if err != nil {
 		return nil, err
 	}
+
 	in := kms.DecryptInput{
 		KeyId:          &c.kmsKeyID,
 		CiphertextBlob: decodedItem,
 	}
+
 	if ec, ok := getEncryptionContext(ctx); ok {
 		in.EncryptionContext = ec
 	}
+
 	out, err := c.kmsClient.Decrypt(ctx, &in)
 	if err != nil {
 		return nil, err
 	}
-	it := map[string]types.AttributeValue{}
-	if err := json.Unmarshal(out.Plaintext, &it); err != nil {
-		return nil, err
-	}
-	return it, nil
+
+	return attrMapUnmarshalJSON(out.Plaintext)
 }
