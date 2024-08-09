@@ -27,6 +27,7 @@ package dyno
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -50,25 +51,22 @@ func getEncryptionContext(ctx context.Context) (ec map[string]string, ok bool) {
 	return
 }
 
-func attrMapMarshalJSON(item map[string]types.AttributeValue) ([]byte, error) {
-	var it map[string]any
-	if err := attributevalue.UnmarshalMap(item, &it); err != nil {
+func serialize(input map[string]types.AttributeValue) ([]byte, error) {
+	var jsonMap map[string]any
+	if err := attributevalue.UnmarshalMap(input, &jsonMap); err != nil {
 		return nil, err
 	}
 
-	itJson, err := json.Marshal(it)
-	if err != nil {
-		return nil, err
-	}
+	fmt.Println(jsonMap)
 
-	return itJson, nil
+	return json.Marshal(jsonMap)
 }
 
-func attrMapUnmarshalJSON(itJson []byte) (map[string]types.AttributeValue, error) {
-	var it map[string]any
-	if err := json.Unmarshal(itJson, &it); err != nil {
+func deserialize(input []byte) (map[string]types.AttributeValue, error) {
+	var jsonMap map[string]any
+	if err := json.Unmarshal(input, &jsonMap); err != nil {
 		return nil, err
 	}
 
-	return attributevalue.MarshalMap(it)
+	return attributevalue.MarshalMap(jsonMap)
 }

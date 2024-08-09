@@ -27,13 +27,14 @@ func (c *kmsCryptedItem) Encrypt(
 	ctx context.Context,
 	item map[string]types.AttributeValue,
 ) (string, error) {
-	itJson, err := attrMapMarshalJSON(item)
+	plainText, err := serialize(item)
 	if err != nil {
 		return "", err
 	}
+
 	in := kms.EncryptInput{
 		KeyId:     &c.kmsKeyID,
-		Plaintext: itJson,
+		Plaintext: plainText,
 	}
 
 	if ec, ok := getEncryptionContext(ctx); ok {
@@ -54,14 +55,14 @@ func (c *kmsCryptedItem) Decrypt(
 	ctx context.Context,
 	item string,
 ) (map[string]types.AttributeValue, error) {
-	decodedItem, err := base64.URLEncoding.DecodeString(item)
+	cipherText, err := base64.URLEncoding.DecodeString(item)
 	if err != nil {
 		return nil, err
 	}
 
 	in := kms.DecryptInput{
 		KeyId:          &c.kmsKeyID,
-		CiphertextBlob: decodedItem,
+		CiphertextBlob: cipherText,
 	}
 
 	if ec, ok := getEncryptionContext(ctx); ok {
@@ -73,5 +74,5 @@ func (c *kmsCryptedItem) Decrypt(
 		return nil, err
 	}
 
-	return attrMapUnmarshalJSON(out.Plaintext)
+	return deserialize(out.Plaintext)
 }

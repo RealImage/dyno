@@ -39,7 +39,7 @@ type aesCryptedItem struct {
 func (c *aesCryptedItem) Encrypt(ctx context.Context,
 	item map[string]types.AttributeValue,
 ) (string, error) {
-	it, err := attrMapMarshalJSON(item)
+	plainText, err := serialize(item)
 	if err != nil {
 		return "", err
 	}
@@ -49,7 +49,7 @@ func (c *aesCryptedItem) Encrypt(ctx context.Context,
 		return "", err
 	}
 
-	cipherText := c.mode.Seal(nil, nonce, it, nil)
+	cipherText := c.mode.Seal(nil, nonce, plainText, nil)
 	cipherText = append(nonce, cipherText...)
 
 	return base64.URLEncoding.EncodeToString(cipherText), nil
@@ -61,20 +61,20 @@ func (c *aesCryptedItem) Decrypt(
 	ctx context.Context,
 	item string,
 ) (map[string]types.AttributeValue, error) {
-	decodedItem, err := base64.URLEncoding.DecodeString(item)
+	nonceAndCipherText, err := base64.URLEncoding.DecodeString(item)
 	if err != nil {
 		return nil, err
 	}
 
 	plainText, err := c.mode.Open(
 		nil,
-		decodedItem[:c.mode.NonceSize()],
-		decodedItem[c.mode.NonceSize():],
+		nonceAndCipherText[:c.mode.NonceSize()],
+		nonceAndCipherText[c.mode.NonceSize():],
 		nil,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return attrMapUnmarshalJSON(plainText)
+	return deserialize(plainText)
 }
