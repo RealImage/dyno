@@ -11,6 +11,7 @@ import (
 var testCases = []struct {
 	name string
 	item map[string]types.AttributeValue
+	err  bool
 }{
 	{
 		name: "string",
@@ -35,12 +36,14 @@ var testCases = []struct {
 		item: map[string]types.AttributeValue{
 			"key": &types.AttributeValueMemberBOOL{Value: true},
 		},
+		err: true,
 	},
 	{
 		name: "null",
 		item: map[string]types.AttributeValue{
 			"key": &types.AttributeValueMemberNULL{Value: true},
 		},
+		err: true,
 	},
 	{
 		name: "list",
@@ -55,6 +58,7 @@ var testCases = []struct {
 				},
 			},
 		},
+		err: true,
 	},
 	{
 		name: "map",
@@ -65,14 +69,26 @@ var testCases = []struct {
 				},
 			},
 		},
+		err: true,
+	},
+	{
+		name: "binarySet",
+		item: map[string]types.AttributeValue{
+			"key": &types.AttributeValueMemberBS{
+				Value: [][]byte{
+					[]byte("value"),
+				},
+			},
+		},
+		err: true,
 	},
 }
 
-func TestAesItemCrypter(t *testing.T) {
+func TestAesCrypter(t *testing.T) {
 	password := []byte("password")
 	salt := []byte("saltsalt")
 
-	ic, err := NewAesItemCrypter(password, salt)
+	ic, err := NewAesCrypter(password, salt)
 	if err != nil {
 		t.Fatalf("NewAesItemCrypter() error = %v, want nil", err)
 	}
@@ -84,6 +100,16 @@ func TestAesItemCrypter(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run("EncryptDecrypt_"+tc.name, func(t *testing.T) {
 			cipherText, err := ic.Encrypt(context.Background(), tc.item)
+
+			if tc.err {
+				if err == nil {
+					t.Fatalf("Encrypt() error = nil, want error")
+				}
+
+				// OK
+				return
+			}
+
 			if err != nil {
 				t.Fatalf("Encrypt() error = %v, want nil", err)
 			}

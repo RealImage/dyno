@@ -13,8 +13,9 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
-// NewAesItemCrypter creates a new ItemCrypter that uses AES GCM encryption.
-func NewAesItemCrypter(password, salt []byte) (ItemCrypter, error) {
+// NewAesCrypter creates a new KeyCrypter that encrypts DynamoDB primary key attributes
+// with AES GCM encryption.
+func NewAesCrypter(password, salt []byte) (KeyCrypter, error) {
 	key := pbkdf2.Key(password, salt, 4096, 32, sha1.New)
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -59,9 +60,9 @@ func (c *aesCryptedItem) Encrypt(ctx context.Context,
 // The item must have been encrypted with the same encryption context.
 func (c *aesCryptedItem) Decrypt(
 	ctx context.Context,
-	item string,
+	itemStr string,
 ) (map[string]types.AttributeValue, error) {
-	nonceAndCipherText, err := base64.URLEncoding.DecodeString(item)
+	nonceAndCipherText, err := base64.URLEncoding.DecodeString(itemStr)
 	if err != nil {
 		return nil, err
 	}

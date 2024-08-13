@@ -8,22 +8,22 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
 
-func NewKmsItemCrypter(kmsKeyID string, kmsClient *kms.Client) ItemCrypter {
-	return &kmsCryptedItem{
+func NewKmsCrypter(kmsKeyID string, kmsClient *kms.Client) KeyCrypter {
+	return &kmsCrypter{
 		kmsKeyID:  kmsKeyID,
 		kmsClient: kmsClient,
 	}
 }
 
-// kmsCryptedItem is a struct that encrypts and decrypts dynamodb items with a KMS key.
-type kmsCryptedItem struct {
+// kmsCrypter is a struct that encrypts and decrypts dynamodb items with a KMS key.
+type kmsCrypter struct {
 	kmsKeyID  string
 	kmsClient *kms.Client
 }
 
 // Encrypt encrypts a dynamodb item. If ctx contains an encryption context, it will be used
 // to encrypt the item.
-func (c *kmsCryptedItem) Encrypt(
+func (c *kmsCrypter) Encrypt(
 	ctx context.Context,
 	item map[string]types.AttributeValue,
 ) (string, error) {
@@ -51,7 +51,7 @@ func (c *kmsCryptedItem) Encrypt(
 
 // Decrypt decrypts a dynamodb item. If ctx contains an encryption context, it will be used
 // to decrypt the item. The item must have been encrypted with the same encryption context.
-func (c *kmsCryptedItem) Decrypt(
+func (c *kmsCrypter) Decrypt(
 	ctx context.Context,
 	item string,
 ) (map[string]types.AttributeValue, error) {

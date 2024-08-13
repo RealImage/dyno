@@ -6,26 +6,27 @@
 //
 // Example:
 //
-//	// Create a new CryptedItem
-//	cryptedItem := dyno.NewCryptedItem("alias/my-kms-key", kmsClient)
+//	// Create a new AesCrypter
+//	crypter := dyno.NewAesCrypter([]byte("encryption-password"), []byte("salt"))
 //
 //	// Encrypt the lastEvaluatedKey
-//	encryptedLastEvaluatedKey, err := cryptedItem.Encrypt(ctx, map[string]string{
+//	encryptedLastEvaluatedKey, err := crypter.Encrypt(ctx, map[string]string{
 //		"clientID": "1234",
 //	}, lastEvaluatedKey)
 //
-//	// Pass the encryptedLastEvaluatedKey to the client
+//	// Pass the encryptedLastEvaluatedKey to the client in the response
 //
-//	// Client passes the encryptedLastEvaluatedKey back to the server
+//	// Client passes the encryptedLastEvaluatedKey back to the server in the next request
 //
 //	// Decrypt the encryptedLastEvaluatedKey
-//	lastEvaluatedKey, err := cryptedItem.Decrypt(ctx, map[string]string{
+//	lastEvaluatedKey, err := crypter.Decrypt(ctx, map[string]string{
 //		"clientID": "1234",
 //	}, encryptedLastEvaluatedKey)
 package dyno
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -33,8 +34,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-// ItemCrypter is an interface that encrypts and decrypts dynamodb items.
-type ItemCrypter interface {
+// KeyCrypter is an interface that encrypts and decrypts DynamoDB primary key attribute values.
+type KeyCrypter interface {
 	Encrypt(ctx context.Context, item map[string]types.AttributeValue) (string, error)
 	Decrypt(ctx context.Context, item string) (map[string]types.AttributeValue, error)
 }
@@ -52,12 +53,19 @@ func getEncryptionContext(ctx context.Context) (ec map[string]string, ok bool) {
 }
 
 func serialize(input map[string]types.AttributeValue) ([]byte, error) {
+	for _, v := range input {
+		switch v.(type) {
+		case *types.AttributeValueMemberS, *types.AttributeValueMemberB, *types.AttributeValueMemberN:
+			continue
+		default:
+			return nil, fmt.Errorf("unsupported type: %T", v)
+		}
+	}
+
 	var jsonMap map[string]any
 	if err := attributevalue.UnmarshalMap(input, &jsonMap); err != nil {
 		return nil, err
 	}
-
-	fmt.Println(jsonMap)
 
 	return json.Marshal(jsonMap)
 }
@@ -68,5 +76,19 @@ func deserialize(input []byte) (map[string]types.AttributeValue, error) {
 		return nil, err
 	}
 
-	return attributevalue.MarshalMap(jsonMap)
+	output, err := attributevalue.MarshalMap(jsonMap)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert hex strings back to byte slices
+	for k, v := range output {
+		if s, ok := v.(*types.AttributeValueMemberS); ok {
+			if val, err := base64.StdEncoding.DecodeString(s.Value); err == nil {
+				output[k] = &types.AttributeValueMemberB{Value: val}
+			}
+		}
+	}
+
+	return output, nil
 }
