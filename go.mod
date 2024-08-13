@@ -15,6 +15,4 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.22.3 // indirect
 	github.com/aws/smithy-go v1.20.3 // indirect
-	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
-	github.com/x448/float16 v0.8.4 // indirect
 )
