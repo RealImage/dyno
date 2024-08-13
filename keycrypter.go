@@ -36,7 +36,11 @@ import (
 
 // KeyCrypter is an interface that encrypts and decrypts DynamoDB primary key attribute values.
 type KeyCrypter interface {
+	// Encrypt encrypts a DynamoDB primary key item along with an encryption context.
 	Encrypt(ctx context.Context, item map[string]types.AttributeValue) (string, error)
+	// Decrypt decrypts a DynamoDB primary key item.
+	// If the item was encrypted with an encryption context,
+	// the same context must be provided to decrypt the item.
 	Decrypt(ctx context.Context, item string) (map[string]types.AttributeValue, error)
 }
 

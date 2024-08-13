@@ -8,21 +8,26 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
 
+// NewKmsCrypter returns a KeyCrypter that encrypts and decrypts dynamodb primary key
+// attributevalues using AWS KMS.
+// The KMS key ID is the ARN of the KMS key used to encrypt and decrypt the items.
+// The KMS client is used to call the KMS API. If nil, a new client will be created.
 func NewKmsCrypter(kmsKeyID string, kmsClient *kms.Client) KeyCrypter {
+	if kmsClient == nil {
+		kmsClient = kms.New(kms.Options{})
+	}
+
 	return &kmsCrypter{
 		kmsKeyID:  kmsKeyID,
 		kmsClient: kmsClient,
 	}
 }
 
-// kmsCrypter is a struct that encrypts and decrypts dynamodb items with a KMS key.
 type kmsCrypter struct {
 	kmsKeyID  string
 	kmsClient *kms.Client
 }
 
-// Encrypt encrypts a dynamodb item. If ctx contains an encryption context, it will be used
-// to encrypt the item.
 func (c *kmsCrypter) Encrypt(
 	ctx context.Context,
 	item map[string]types.AttributeValue,
@@ -49,8 +54,6 @@ func (c *kmsCrypter) Encrypt(
 	return base64.URLEncoding.EncodeToString(out.CiphertextBlob), nil
 }
 
-// Decrypt decrypts a dynamodb item. If ctx contains an encryption context, it will be used
-// to decrypt the item. The item must have been encrypted with the same encryption context.
 func (c *kmsCrypter) Decrypt(
 	ctx context.Context,
 	item string,
