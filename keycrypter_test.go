@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-func ExampleItemCrypter() {
+func ExampleKeyCrypter() {
 	// Create a new ItemCrypter with a random key.
 	c, err := NewAESCrypter([]byte("encrypt-password"))
 	if err != nil {
