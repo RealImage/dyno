@@ -8,11 +8,27 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-var testCases = []struct {
+func TestCipherCrypterBadKeyLengths(t *testing.T) {
+	t.Run("AES", func(t *testing.T) {
+		if _, err := NewAESCrypter([]byte("password")); err == nil {
+			t.Error("NewAESCrypter() error = nil, want error")
+		}
+	})
+
+	t.Run("ChaCha20Poly1305", func(t *testing.T) {
+		if _, err := NewChaCha20Poly1305Crypter([]byte("password")); err == nil {
+			t.Error("NewChaCha20Poly1305Crypter() error = nil, want error")
+		}
+	})
+}
+
+type encryptDecryptTest struct {
 	name string
 	item map[string]types.AttributeValue
 	err  bool
-}{
+}
+
+var testCases = []encryptDecryptTest{
 	{
 		name: "string",
 		item: map[string]types.AttributeValue{
@@ -84,26 +100,47 @@ var testCases = []struct {
 	},
 }
 
-func TestAesCrypter(t *testing.T) {
-	password := []byte("password")
-	salt := []byte("saltsalt")
+func TestCipherCrypter(t *testing.T) {
+	key := []byte("passwordpasswordpasswordpassword")
 
-	ic, err := NewAesCrypter(password, salt)
-	if err != nil {
-		t.Fatalf("NewAesItemCrypter() error = %v, want nil", err)
-	}
+	t.Run("AES", func(t *testing.T) {
+		ic, err := NewAESCrypter(key)
+		if err != nil {
+			t.Fatalf("NewAesItemCrypter() error = %v, want nil", err)
+		}
+		if ic == nil {
+			t.Fatalf("NewAESCrypter() = nil, want not nil")
+		}
+		t.Run("EncryptDecrypt", func(t *testing.T) {
+			encryptDecryptHelper(t, ic, testCases)
+		})
+	})
 
-	if ic == nil {
-		t.Fatalf("NewAesItemCrypter() = nil, want not nil")
-	}
+	t.Run("ChaCha20Poly1305", func(t *testing.T) {
+		ic, err := NewChaCha20Poly1305Crypter(key)
+		if err != nil {
+			t.Fatalf("NewChaCha20Poly1305Crypter() error = %v, want nil", err)
+		}
+		if ic == nil {
+			t.Fatalf("NewChaCha20Poly1305Crypter() = nil, want not nil")
+		}
+		t.Run("EncryptDecrypt", func(t *testing.T) {
+			encryptDecryptHelper(t, ic, testCases)
+		})
+	})
+}
 
-	for _, tc := range testCases {
-		t.Run("EncryptDecrypt_"+tc.name, func(t *testing.T) {
+func encryptDecryptHelper(t *testing.T, ic KeyCrypter, tcs []encryptDecryptTest) {
+	t.Helper()
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+
 			cipherText, err := ic.Encrypt(context.Background(), tc.item)
 
 			if tc.err {
 				if err == nil {
-					t.Fatalf("Encrypt() error = nil, want error")
+					t.Fatal("Encrypt() error = nil, want error")
 				}
 
 				// OK

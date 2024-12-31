@@ -8,11 +8,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
 
-// NewKmsCrypter returns a KeyCrypter that encrypts and decrypts dynamodb primary key
+// NewKMSCrypter returns a KeyCrypter that encrypts and decrypts dynamodb primary key
 // attributevalues using AWS KMS.
 // The KMS key ID is the ARN of the KMS key used to encrypt and decrypt the items.
 // The KMS client is used to call the KMS API. If nil, a new client will be created.
-func NewKmsCrypter(kmsKeyID string, kmsClient *kms.Client) KeyCrypter {
+func NewKMSCrypter(kmsKeyID string, kmsClient *kms.Client) KeyCrypter {
 	if kmsClient == nil {
 		kmsClient = kms.New(kms.Options{})
 	}
