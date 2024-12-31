@@ -3,25 +3,6 @@
 // returned by a dynamodb query can be encrypted and passed to a client. The client can then
 // pass the encrypted LastEvaluatedKey back to the server, which can decrypt it and use it
 // to continue the query.
-//
-// Example:
-//
-//	// Create a new AesCrypter
-//	crypter := dyno.NewAesCrypter([]byte("encryption-password"), []byte("salt"))
-//
-//	// Encrypt the lastEvaluatedKey
-//	encryptedLastEvaluatedKey, err := crypter.Encrypt(ctx, map[string]string{
-//		"clientID": "1234",
-//	}, lastEvaluatedKey)
-//
-//	// Pass the encryptedLastEvaluatedKey to the client in the response
-//
-//	// Client passes the encryptedLastEvaluatedKey back to the server in the next request
-//
-//	// Decrypt the encryptedLastEvaluatedKey
-//	lastEvaluatedKey, err := crypter.Decrypt(ctx, map[string]string{
-//		"clientID": "1234",
-//	}, encryptedLastEvaluatedKey)
 package dyno
 
 import (
